@@ -11,32 +11,32 @@
 <style>
 /* 레이아웃: 상단 업로드 → 요약 타일 → 탭(학년·학기)별 표 → 등급 구조 */
 :root{
-  --bg:#f4f7f6; --card:#ffffff; --ink:#16302b; --muted:#5b726c; --line:#d9e4e0;
-  --accent:#0f6b5c; --accent-soft:#dff1ec; --hi:#c8ec6a;
-  --a:#2f9e87; --b:#7cc4b0; --c:#bfe0d6; --d:#f0cf8a; --e:#e39a7a;
+  --bg:#f3f6fa; --card:#ffffff; --ink:#17283a; --muted:#5a6c80; --line:#d8e2ee;
+  --accent:#1f5f9e; --accent-soft:#e1eef9; --hi:#c8ec6a;
+  --a:#2f77bd; --b:#86b9e5; --c:#cfe2f4; --d:#f2d27c; --e:#ea9a63;
   --warn:#8a5a00; --warn-bg:#fff4d6;
-  --ta:#ffffff; --tb:#0d2a24; --tc:#0d2a24; --td:#3a2a00; --te:#3a1200;
+  --ta:#ffffff; --tb:#10263d; --tc:#10263d; --td:#3a2a00; --te:#3a1500;
   --font:'Noto Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0f1b19; --card:#172725; --ink:#e4f0ec; --muted:#9bb4ad; --line:#2a403c;
-  --accent:#58c5ae; --accent-soft:#1e3a35; --hi:#9fc13f;
-  --a:#2f9e87; --b:#4b9a89; --c:#33645a; --d:#9b7d34; --e:#9a5a43;
+  --bg:#0f1823; --card:#172433; --ink:#e4eef8; --muted:#9bb0c6; --line:#2a3b50;
+  --accent:#6fb1ea; --accent-soft:#1d3350; --hi:#9fc13f;
+  --a:#5aa0e6; --b:#3d79b8; --c:#2b4f7c; --d:#9b7d34; --e:#9a5a43;
   --warn:#f2cf7a; --warn-bg:#3a3010;
-  --ta:#06201a; --tb:#06201a; --tc:#e4f0ec; --td:#fff7e0; --te:#fff0ea; color-scheme:dark;}}
+  --ta:#04182c; --tb:#f2f8ff; --tc:#f2f8ff; --td:#fff7e0; --te:#fff0ea; color-scheme:dark;}}
 :root[data-theme="dark"]{
-  --bg:#0f1b19; --card:#172725; --ink:#e4f0ec; --muted:#9bb4ad; --line:#2a403c;
-  --accent:#58c5ae; --accent-soft:#1e3a35; --hi:#9fc13f;
-  --a:#2f9e87; --b:#4b9a89; --c:#33645a; --d:#9b7d34; --e:#9a5a43;
+  --bg:#0f1823; --card:#172433; --ink:#e4eef8; --muted:#9bb0c6; --line:#2a3b50;
+  --accent:#6fb1ea; --accent-soft:#1d3350; --hi:#9fc13f;
+  --a:#5aa0e6; --b:#3d79b8; --c:#2b4f7c; --d:#9b7d34; --e:#9a5a43;
   --warn:#f2cf7a; --warn-bg:#3a3010;
-  --ta:#06201a; --tb:#06201a; --tc:#e4f0ec; --td:#fff7e0; --te:#fff0ea; color-scheme:dark;}
+  --ta:#04182c; --tb:#f2f8ff; --tc:#f2f8ff; --td:#fff7e0; --te:#fff0ea; color-scheme:dark;}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6}
 .wrap{max-width:980px;margin:0 auto;padding:20px 16px 64px;display:flex;flex-direction:column;gap:16px}
 h1{font-size:22px;margin:0}
 h2{font-size:17px;margin:0 0 4px}
-p{margin:0}
+p{margin:0;line-height:1.75}
 .sub{color:var(--muted);font-size:13px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
 .drop{border:2px dashed var(--accent);border-radius:12px;padding:22px 14px;text-align:center;background:var(--accent-soft);cursor:pointer}
@@ -48,6 +48,11 @@ button.primary{background:var(--accent);color:#fff}
 button:focus-visible,select:focus-visible,input:focus-visible,.drop:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
 input[type=text],input[type=number],select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 8px;min-width:0}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.hbox{background:var(--accent-soft);border:1.5px solid var(--accent);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.hl{font-weight:700;font-size:15px;color:var(--accent)}
+.hl .opt{font-weight:400;font-size:12px;color:var(--muted)}
+.hin{display:flex;align-items:center;gap:8px;font-weight:700}
+.hin input{width:150px;font-size:18px;font-weight:700;padding:9px 10px;border:2px solid var(--accent);background:var(--card)}
 .field{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--muted)}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .tile{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--card)}
@@ -66,7 +71,7 @@ th{font-size:12px;color:var(--muted);font-weight:500}
 .legend em{font-style:normal;display:inline-flex;align-items:center;gap:4px}
 .legend em::before{content:"";width:10px;height:10px;border-radius:2px;background:var(--c)}
 .legend .la::before{background:var(--a)}.legend .lb::before{background:var(--b)}.legend .ld::before{background:var(--d)}.legend .le::before{background:var(--e)}
-.note{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 10px;font-size:13px}
+.note{line-height:1.75;background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 10px;font-size:13px}
 .pill{display:inline-block;font-size:11px;border:1px solid var(--line);border-radius:999px;padding:0 7px;color:var(--muted);margin-left:6px}
 textarea{width:100%;min-height:260px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--card);color:var(--ink);font:inherit;line-height:1.8;resize:vertical}
 details summary{cursor:pointer;color:var(--accent);font-size:14px}
@@ -92,6 +97,8 @@ h3{font-size:14px;margin:6px 0 0}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chips label{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:13px;cursor:pointer}
 .chips input{margin:0}
+.sn{margin-right:.3em}
+.sn:empty{display:none}
 .hidden{display:none}
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
 .drop:focus-within{outline:3px solid var(--hi);outline-offset:2px}
@@ -102,9 +109,9 @@ h3{font-size:14px;margin:6px 0 0}
 <div class="wrap">
   <header>
     <h1>학업성취 내신 정리기</h1>
-    <p class="sub">학교알리미 교과별 학업성취 사항 파일(엑셀·CSV)을 올리면 과목별 분포, 등급 구조, 학교 요약, 차트를 만듭니다. 파일은 이 브라우저 안에서만 처리되고 어디에도 전송되지 않습니다.</p>
+    <p class="sub">학교알리미 교과별 학업성취 사항 파일(엑셀·CSV)을 올리면<br>과목별 분포, 등급 구조, 학교 요약, 차트를 만듭니다.<br>파일은 이 브라우저 안에서만 처리되고 어디에도 전송되지 않습니다.</p>
   </header>
-  <p class="note" id="notice">비공식 도구입니다. 학교알리미에서 내려받은 교과별 학업성취사항 파일의 공시 수치를 정리해 보여줄 뿐이며, 정확한 내용은 학교알리미와 학교의 공식 자료에서 확인하세요.</p>
+  <p class="note" id="notice">비공식 도구입니다.<br>학교알리미에서 내려받은 교과별 학업성취사항 파일의 공시 수치를 정리해 보여줄 뿐이며,<br>정확한 내용은 학교알리미와 학교의 공식 자료에서 확인하세요.</p>
 
   <section class="card" aria-label="파일 올리기">
     <label class="drop" id="drop" for="file">
@@ -115,32 +122,41 @@ h3{font-size:14px;margin:6px 0 0}
     <div class="row">
       <button id="sample" type="button">예시 데이터로 보기</button>
     </div>
-    <div id="sampleBanner" class="note hidden">지금 화면은 예시 데이터입니다. 파일을 올리면 이 학교 수치로 바뀝니다.</div>
+    <div class="row"><div class="field">학교 이름 (파일에서 못 찾으면 직접 입력)<input type="text" id="school" size="20" placeholder="예: ○○고등학교"></div></div>
+    <div id="sampleBanner" class="note hidden">지금 화면은 예시 데이터입니다.<br>파일을 올리면 이 학교 수치로 바뀝니다.</div>
     <div id="status" class="sub" role="status"></div>
     <details id="mapBox" class="hidden">
       <summary>읽은 열 확인·수정</summary>
-      <p class="sub">제목 행에서 자동으로 찾은 열입니다. 결과가 이상하면 여기서 바꾸세요.</p>
+      <p class="sub">제목 행에서 자동으로 찾은 열입니다.<br>결과가 이상하면 여기서 바꾸세요.</p>
       <div class="map" id="map"></div>
     </details>
   </section>
 
   <div id="out" class="hidden" style="display:flex;flex-direction:column;gap:16px">
-    <section class="card" aria-label="학교 전체 요약">
-      <h2>학교 전체 요약</h2>
-      <div class="tiles" id="tiles"></div>
+    <section class="card" aria-label="학년·학기별 전체 성취도 구성">
+      <h2><span class="sn"></span>학년·학기별 전체 성취도 구성 <span class="pill">단위수 가중, 5단계 과목, 표시 과목 기준</span></h2>
+      <div class="legend"><em class="la">A</em><em class="lb">B</em><em>C</em><em class="ld">D</em><em class="le">E</em></div>
+      <div class="ch" id="chGroups"></div>
     </section>
 
-    <section class="card" aria-label="한눈에 보기">
-      <h2>한눈에 보기</h2>
+    <section class="card" aria-label="보기 설정">
+      <div class="tabs" id="tabs" role="tablist"></div>
       <div class="row">
-        <div class="field">표시 과목 (아래 차트·표에 적용)
+        <div class="field">표시 과목 (아래 모든 화면에 적용)
           <select id="show"><option value="main">주요 과목만 (국·수·영·사·과·한국사)</option><option value="all">전체 과목</option><option value="custom">직접 선택</option></select>
         </div>
       </div>
       <div id="chips" class="chips hidden"></div>
+    </section>
+
+    <section class="card" aria-label="학교 전체 요약">
+      <h2><span class="sn"></span>요약 <span class="pill">표시 중인 과목 기준</span></h2>
+      <div class="tiles" id="tiles"></div>
+    </section>
+
+    <section class="card" aria-label="한눈에 보기">
+      <h2><span class="sn"></span>한눈에 보기</h2>
       <div class="legend"><em class="la">A</em><em class="lb">B</em><em>C</em><em class="ld">D</em><em class="le">E</em></div>
-      <h3>학년·학기별 전체 성취도 구성 <span class="pill">단위수 가중, 5단계 과목</span></h3>
-      <div class="ch" id="chGroups"></div>
       <h3 id="chSubTitle">과목별 성취도 구성</h3>
       <div class="ch" id="chSubs"></div>
       <div class="axis"><span></span><div><span>0%</span><span>50%</span><span>100%</span></div></div>
@@ -149,22 +165,18 @@ h3{font-size:14px;margin:6px 0 0}
     </section>
 
     <section class="card" aria-label="과목별 성취도 분포">
-      <h2>과목별 성취도 분포</h2>
-      <div class="tabs" id="tabs" role="tablist"></div>
+      <h2><span class="sn"></span>과목별 성취도 분포</h2>
       <div class="legend"><em class="la">A</em><em class="lb">B</em><em>C</em><em class="ld">D</em><em class="le">E</em></div>
       <div class="scroll"><table id="tbl"></table></div>
     </section>
 
     <section class="card" aria-label="등급 구조">
-      <h2>등급 구조 요약</h2>
-      <p class="sub">5등급제는 2025학년도 입학생부터, 이전 입학생은 9등급제가 적용됩니다(2026학년도에는 3학년이 9등급제). 석차등급(1~5등급)은 상대평가 순위 비율로 정해지며, A~E 성취도는 절대평가라 별개입니다. 예체능·교양과 융합선택 중 사회·과학 교과는 절대평가만 표기합니다. (근거: 교육부 2028 대입제도 개편 확정안, 2023.12.27)</p>
-      <div class="row">
-        <div class="field">이 학년 학생 수(명, 선택)<input type="number" id="head" min="0" placeholder="예: 250" style="width:130px"></div>
-      </div>
-      <p class="sub">입력하면 등급별 예상 인원이 표에 나옵니다. 학교알리미 "학생 현황"의 학년별 학생 수를 넣으세요. 공통과목처럼 학년 전체가 듣는 과목에 맞는 값이고, 선택과목은 수강 인원이 달라 맞지 않을 수 있습니다. 비워 두어도 나머지 기능은 그대로 작동합니다.</p>
-      <div class="tabs" id="schemeTabs" role="tablist">
-        <button type="button" role="tab" aria-selected="true" data-s="5">5등급제 (2025학년도 입학생부터)</button>
-        <button type="button" role="tab" aria-selected="false" data-s="9">9등급제 (2024학년도 이전 입학생)</button>
+      <h2><span class="sn"></span>등급 구조 요약</h2>
+      <p class="sub">5등급제는 2025학년도 입학생부터 적용됩니다.<br>2026학년도 3학년(2024학년도 이전 입학생)은 9등급제가 적용됩니다.<br><br>석차등급(1~5등급)은 상대평가 순위 비율로 정해지며,<br>A~E 성취도는 절대평가라 별개입니다.<br><br>예체능·교양과 융합선택 중 사회·과학 교과는 절대평가만 표기합니다.<br>(근거: 교육부 2028 대입제도 개편 확정안, 2023.12.27)</p>
+      <div class="hbox">
+        <label class="hl" for="head">이 학년 학생 수 입력 <span class="opt">(선택)</span></label>
+        <div class="hin"><input type="number" id="head" min="0" placeholder="예: 250"><span>명</span></div>
+        <p class="sub">입력하면 등급별 예상 인원이 표에 나옵니다.<br>학교알리미 "학생 현황"의 학년별 학생 수를 넣으세요.<br>공통과목처럼 학년 전체가 듣는 과목에 맞는 값이고,<br>선택과목은 수강 인원이 달라 맞지 않을 수 있습니다.<br>비워 두어도 나머지 기능은 그대로 작동합니다.</p>
       </div>
       <div class="scroll"><table id="gradeTbl"></table></div>
     </section>
@@ -233,6 +245,26 @@ function looksHTML(buf){
   for(var i=0;i<head.length;i++)str+=String.fromCharCode(head[i]);
   return /<\s*(html|table|meta|head|body)\b/i.test(str);
 }
+function updateSchool(){
+  var v=$('school').value.trim();
+  Array.prototype.forEach.call(document.querySelectorAll('.sn'),function(e){e.textContent=v});
+}
+function findSchool(sheets,fname){
+  var re=/([가-힣]{2,12}(?:여자고등학교|고등학교|중학교))/;
+  for(var k=0;k<sheets.length;k++){
+    var rows=(sheets[k].aoa||[]).slice(0,15);
+    for(var i=0;i<rows.length;i++){
+      var r=rows[i]||[];
+      for(var c=0;c<r.length;c++){
+        if(typeof r[c]==='string'){var m=r[c].match(re);if(m)return m[1]}
+      }
+    }
+  }
+  var base=(fname||'').replace(/\.[^.]*$/,''),m2=base.match(re);
+  if(m2)return m2[1];
+  var m3=base.match(/([가-힣]{2,6})고(?![가-힣])/);
+  return m3?m3[1]+'고등학교':'';
+}
 function handleFile(f){
   if(!f)return;
   $('status').textContent='읽는 중… '+f.name;
@@ -260,6 +292,7 @@ function handleFile(f){
         return;
       }
       $('sampleBanner').classList.add('hidden');
+      $('school').value=findSchool(sheets,f.name);updateSchool();
       state.raw=best.raw;state.headers=best.headers;state.hdrEnd=best.hdrEnd;state.colmap=best.map;state.cur=null;
       $('status').textContent=f.name+' 을(를) 읽었습니다.';
       buildMap();process();
@@ -435,10 +468,8 @@ function gLabel(g){return g?g+'학년':'학년 미표기'}
 var MAIN=/국어|문학|화법|독서|언어|수학|대수|미적분|기하|확률|영어|한국사|사회|역사|과학|물리|화학|생명|지구|통합/;
 state.custom={};
 function allRows(){return state.rows.filter(function(r){return r.grade===state.cur[0]&&r.term===state.cur[1]})}
-function curRows(){
-  var mode=$('show').value;
-  return allRows().filter(function(r){return mode==='all'?true:mode==='main'?MAIN.test(r.name):!!state.custom[r.name]});
-}
+function visible(r){var mode=$('show').value;return mode==='all'?true:mode==='main'?MAIN.test(r.name):!!state.custom[r.name]}
+function curRows(){return allRows().filter(visible)}
 function renderChips(){
   var box=$('chips'),mode=$('show').value;
   if(mode!=='custom'){box.classList.add('hidden');return}
@@ -488,7 +519,7 @@ function stack(d){
 function renderCharts(){
   var g='';
   state.groups.forEach(function(gr){
-    var rows=state.rows.filter(function(r){return r.grade===gr[0]&&r.term===gr[1]&&!r.three});
+    var rows=state.rows.filter(function(r){return r.grade===gr[0]&&r.term===gr[1]&&!r.three&&visible(r)});
     if(!rows.length)return;
     var d={};['A','B','C','D','E'].forEach(function(L){d[L]=wavg(rows,function(r){return r.d[L]})});
     g+='<div class="chr"><div class="lb2">'+gLabel(gr[0])+' '+gr[1]+'학기</div>'+stack(d)+'</div>';
@@ -501,8 +532,8 @@ function renderCharts(){
   $('chAvg').innerHTML=sorted.length?sorted.map(function(r){return '<div class="vc"><div class="vw" role="img" aria-label="'+esc(r.name)+' 평균 '+fmt(r.avg)+'점"><b>'+fmt(r.avg)+'</b><i style="height:'+Math.round(Math.min(100,r.avg)*1.6)+'px"></i></div><div class="vn">'+esc(r.name)+'</div></div>'}).join(''):'<p class="sub">평균 점수 열이 없습니다.</p>';
 }
 function renderTiles(){
-  var s=summary(allRows());
-  var T=[[s.n+'과목','공시 과목 줄 수'],[fmt(s.avg),'단위수 가중 평균 점수'],[fmt(s.a)+'%','A 비율 (단위수 가중)'],[fmt(s.ab)+'%','A+B 비율 (5단계 과목)'],[fmt(s.de)+'%','D+E 비율 (5단계 과목)'],[s.three+'과목','A~C 3단계 공시']];
+  var s=summary(curRows());
+  var T=[[s.n+'과목','표시 중인 과목 수'],[fmt(s.avg),'단위수 가중 평균 점수'],[fmt(s.a)+'%','A 비율 (단위수 가중)'],[fmt(s.ab)+'%','A+B 비율 (5단계 과목)'],[fmt(s.de)+'%','D+E 비율 (5단계 과목)'],[s.three+'과목','A~C 3단계 공시']];
   $('tiles').innerHTML=T.map(function(t){return '<div class="tile"><b>'+esc(t[0])+'</b><span>'+esc(t[1])+'</span></div>'}).join('');
 }
 function renderTabs(){
@@ -530,7 +561,7 @@ function renderTable(){
   });
   $('tbl').innerHTML=h+'</tbody>';
 }
-var P5=[10,24,32,24,10],P9=[4,7,12,17,20,17,12,7,4];
+var P5=[10,24,32,24,10];
 function gradeTable(P,head){
   var cum=0;
   var h='<thead><tr><th>등급</th><th>비율(%)</th><th>누적(%)</th>'+(head?'<th>예상 인원(명)</th><th>누적 인원(명)</th>':'')+'</tr></thead><tbody>';
@@ -540,11 +571,8 @@ function gradeTable(P,head){
   });
   return h+'</tbody>';
 }
-var scheme='5';
 function renderGrades(){
-  var head=num($('head').value);
-  $('gradeTbl').innerHTML=gradeTable(scheme==='5'?P5:P9,head);
-  Array.prototype.forEach.call($('schemeTabs').querySelectorAll('button'),function(b){b.setAttribute('aria-selected',String(b.dataset.s===scheme))});
+  $('gradeTbl').innerHTML=gradeTable(P5,num($('head').value));
 }
 /* ---------- 복사 ---------- */
 function copyText(text,html,msgId){
@@ -567,12 +595,12 @@ fi.addEventListener('change',function(){handleFile(fi.files[0]);fi.value=''});
 ['dragenter','dragover'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('over')})});
 ['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('over')})});
 drop.addEventListener('drop',function(e){handleFile(e.dataTransfer.files[0])});
+$('school').addEventListener('input',updateSchool);
 $('show').addEventListener('change',function(){
   if($('show').value==='custom'&&!Object.keys(state.custom).some(function(k){return state.custom[k]})){allRows().forEach(function(r){if(MAIN.test(r.name))state.custom[r.name]=true})}
   render();
 });
 $('head').addEventListener('input',renderGrades);
-Array.prototype.forEach.call($('schemeTabs').querySelectorAll('button'),function(b){b.addEventListener('click',function(){scheme=b.dataset.s;renderGrades()})});
 
 /* ---------- 예시 ---------- */
 function sample(){
