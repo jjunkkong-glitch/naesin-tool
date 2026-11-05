@@ -269,11 +269,12 @@ function findSchool(sheets,fname){
   var m3=base.match(/([가-힣]{2,6})고(?![가-힣])/);
   return m3?m3[1]+'고등학교':'';
 }
-function handleFile(f){
+function handleFile(f,done){
   if(!f)return;
+  var fin=function(){if(done)done()};
   $('status').textContent='읽는 중… '+f.name;
   var rd=new FileReader();
-  rd.onerror=function(){$('status').textContent='파일을 열지 못했습니다. 다른 앱에서 열려 있지 않은지 확인하고 다시 시도해 주세요.'};
+  rd.onerror=function(){$('status').textContent='파일을 열지 못했습니다. 다른 앱에서 열려 있지 않은지 확인하고 다시 시도해 주세요.';fin()};
   rd.onload=function(e){
     try{
       var buf=e.target.result,sheets=[],isCsv=/\.(csv|txt)$/i.test(f.name);
@@ -300,7 +301,9 @@ function handleFile(f){
       state.raw=best.raw;state.headers=best.headers;state.hdrEnd=best.hdrEnd;state.colmap=best.map;state.cur=null;
       $('status').textContent=f.name+' 을(를) 읽었습니다.';
       buildMap();process();
+      try{$('out').scrollIntoView({behavior:'smooth',block:'start'})}catch(e2){}
     }catch(err){$('status').textContent='파일을 읽지 못했습니다: '+err.message}
+    finally{fin()}
   };
   rd.readAsArrayBuffer(f);
 }
@@ -595,7 +598,13 @@ function copyText(text,html,msgId){
 }
 /* ---------- 입력 이벤트 ---------- */
 var drop=$('drop'),fi=$('file');
-fi.addEventListener('change',function(){handleFile(fi.files[0]);fi.value=''});
+var busy=false;
+function onPick(){var f=fi.files&&fi.files[0];if(!f||busy)return;busy=true;
+  $('status').textContent='선택한 파일: '+f.name+' ('+Math.max(1,Math.round(f.size/1024))+'KB) — 읽는 중…';
+  var wd=setTimeout(function(){if(busy)$('status').textContent='읽기가 끝나지 않습니다. 앱 안의 화면이라면 폰 브라우저(크롬·사파리)에서 주소를 직접 열어 다시 시도해 주세요.'},8000);
+  handleFile(f,function(){busy=false;clearTimeout(wd);try{fi.value=''}catch(e){}})}
+window.addEventListener('error',function(e){try{$('status').textContent='오류: '+(e.message||'알 수 없는 오류')}catch(x){}});
+fi.addEventListener('change',onPick);fi.addEventListener('input',onPick);
 ['dragenter','dragover'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('over')})});
 ['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('over')})});
 drop.addEventListener('drop',function(e){handleFile(e.dataTransfer.files[0])});
