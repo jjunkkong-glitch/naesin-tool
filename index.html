@@ -516,7 +516,7 @@ function render(){
 
 function stack(d){
   var h='<div class="stk" role="img" aria-label="성취도 구성">';
-  ['A','B','C','D','E'].forEach(function(L){var v=d[L];if(v)h+='<span class="s'+L+'" style="width:'+v+'%">'+(v>=7?Math.round(v):'')+'</span>'});
+  ['A','B','C','D','E'].forEach(function(L){var v=d[L];if(v)h+='<span class="s'+L+'" style="width:'+v+'%">'+(v>=8?(Math.round(v*10)/10).toFixed(1):'')+'</span>'});
   return h+'</div>';
 }
 function renderCharts(){
