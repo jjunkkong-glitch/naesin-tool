@@ -48,6 +48,7 @@ button.primary{background:var(--accent);color:#fff}
 button:focus-visible,select:focus-visible,input:focus-visible,.drop:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
 input[type=text],input[type=number],select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 8px;min-width:0}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+#tblTitle:empty{display:none}
 .credit{text-align:center;font-size:12px;color:var(--muted);padding:4px 0}
 .credit a{color:var(--accent);text-decoration:none}
 .hbox{background:var(--accent-soft);border:1.5px solid var(--accent);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
@@ -169,6 +170,7 @@ h3{font-size:14px;margin:6px 0 0}
 
     <section class="card" aria-label="과목별 성취도 분포">
       <h2><span class="sn"></span>과목별 성취도 분포</h2>
+      <h3 id="tblTitle"></h3>
       <div class="legend"><em class="la">A</em><em class="lb">B</em><em>C</em><em class="ld">D</em><em class="le">E</em></div>
       <div class="scroll"><table id="tbl"></table></div>
     </section>
@@ -570,6 +572,7 @@ function bar(d){
 }
 function renderTable(){
   var rows=curRows();
+  if(state.cur)$('tblTitle').textContent=gLabel(state.cur[0])+' '+state.cur[1]+'학기';
   var h='<thead><tr><th>과목(단위)</th><th>평균</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th class="l">분포</th></tr></thead><tbody>';
   rows.forEach(function(r){
     h+='<tr><td>'+esc(r.name)+(r.unit!==null?' ('+r.unit+')':'')+(r.three?'<span class="pill">A~C</span>':'')+'</td><td>'+fmt(r.avg)+'</td>'+
