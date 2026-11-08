@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>학업성취 내신 정리기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* 레이아웃: 상단 업로드 → 요약 타일 → 탭(학년·학기)별 표 → 등급 구조 */
+:root{
+  --bg:#f3f6fa; --card:#ffffff; --ink:#17283a; --muted:#5a6c80; --line:#d8e2ee;
+  --accent:#1f5f9e; --accent-soft:#e1eef9; --hi:#c8ec6a;
+  --a:#2f77bd; --b:#86b9e5; --c:#cfe2f4; --d:#f2d27c; --e:#ea9a63;
+  --warn:#8a5a00; --warn-bg:#fff4d6;
+  --ta:#ffffff; --tb:#10263d; --tc:#10263d; --td:#3a2a00; --te:#3a1500;
+  --font:'Noto Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1823; --card:#172433; --ink:#e4eef8; --muted:#9bb0c6; --line:#2a3b50;
+  --accent:#6fb1ea; --accent-soft:#1d3350; --hi:#9fc13f;
+  --a:#5aa0e6; --b:#3d79b8; --c:#2b4f7c; --d:#9b7d34; --e:#9a5a43;
+  --warn:#f2cf7a; --warn-bg:#3a3010;
+  --ta:#04182c; --tb:#f2f8ff; --tc:#f2f8ff; --td:#fff7e0; --te:#fff0ea; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0f1823; --card:#172433; --ink:#e4eef8; --muted:#9bb0c6; --line:#2a3b50;
+  --accent:#6fb1ea; --accent-soft:#1d3350; --hi:#9fc13f;
+  --a:#5aa0e6; --b:#3d79b8; --c:#2b4f7c; --d:#9b7d34; --e:#9a5a43;
+  --warn:#f2cf7a; --warn-bg:#3a3010;
+  --ta:#04182c; --tb:#f2f8ff; --tc:#f2f8ff; --td:#fff7e0; --te:#fff0ea; color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 64px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:22px;margin:0}
+h2{font-size:17px;margin:0 0 4px}
+p{margin:0;line-height:1.75}
+.sub{color:var(--muted);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.drop{border:2px dashed var(--accent);border-radius:12px;padding:22px 14px;text-align:center;background:var(--accent-soft);cursor:pointer}
+.drop.over{background:var(--hi);color:#16302b}
+.drop strong{display:block;font-size:16px}
+button,select,input[type=text],input[type=number]{font:inherit;color:var(--ink)}
+button{border:1px solid var(--accent);background:var(--card);border-radius:8px;padding:7px 12px;cursor:pointer}
+button.primary{background:var(--accent);color:#fff}
+button:focus-visible,select:focus-visible,input:focus-visible,.drop:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
+input[type=text],input[type=number],select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 8px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+#tblTitle:empty{display:none}
+.credit{text-align:center;font-size:12px;color:var(--muted);padding:4px 0}
+.credit a{color:var(--accent);text-decoration:none}
+.hbox{background:var(--accent-soft);border:1.5px solid var(--accent);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.bigsel{font-size:16px;font-weight:700;padding:10px 12px;border:2px solid var(--accent);background:var(--card);color:inherit;border-radius:8px;max-width:100%}
+.hl{font-weight:700;font-size:15px;color:var(--accent)}
+.hl .opt{font-weight:400;font-size:12px;color:var(--muted)}
+.hin{display:flex;align-items:center;gap:8px;font-weight:700}
+.hin input{width:150px;font-size:18px;font-weight:700;padding:9px 10px;border:2px solid var(--accent);background:var(--card)}
+.field{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--card)}
+.tile b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.tile span{font-size:12px;color:var(--muted)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button[aria-selected=true]{background:var(--accent);color:#fff}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:14px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child,th.l,td.l{text-align:left}
+th{font-size:12px;color:var(--muted);font-weight:500}
+.bar{display:flex;height:12px;min-width:120px;border-radius:6px;overflow:hidden;background:var(--line)}
+.bar i{display:block;height:100%}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.legend em{font-style:normal;display:inline-flex;align-items:center;gap:4px}
+.legend em::before{content:"";width:10px;height:10px;border-radius:2px;background:var(--c)}
+.legend .la::before{background:var(--a)}.legend .lb::before{background:var(--b)}.legend .ld::before{background:var(--d)}.legend .le::before{background:var(--e)}
+.note{line-height:1.75;background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 10px;font-size:13px}
+.pill{display:inline-block;font-size:11px;border:1px solid var(--line);border-radius:999px;padding:0 7px;color:var(--muted);margin-left:6px}
+textarea{width:100%;min-height:260px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--card);color:var(--ink);font:inherit;line-height:1.8;resize:vertical}
+details summary{cursor:pointer;color:var(--accent);font-size:14px}
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:8px}
+.ch{display:flex;flex-direction:column;gap:6px}
+.chr{display:grid;grid-template-columns:104px 1fr;gap:8px;align-items:center;font-size:13px}
+.chr .lb2{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stk{display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--line)}
+.stk span{box-shadow:inset -1px 0 var(--card);display:flex;align-items:center;justify-content:center;font-size:11px;font-variant-numeric:tabular-nums;overflow:hidden;white-space:nowrap}
+.stk span.sm{font-size:10px;letter-spacing:-.3px}
+.sA{background:var(--a);color:var(--ta)}.sB{background:var(--b);color:var(--tb)}.sC{background:var(--c);color:var(--tc)}.sD{background:var(--d);color:var(--td)}.sE{background:var(--e);color:var(--te)}
+.avgbar{position:relative;height:22px;background:var(--line);border-radius:6px;overflow:hidden}
+.avgbar i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);opacity:.85;border-radius:6px 0 0 6px}
+.avgbar b{position:absolute;left:8px;top:0;line-height:22px;font-size:12px;color:#fff;font-variant-numeric:tabular-nums}
+.vchart{display:flex;gap:6px;align-items:flex-start;padding-bottom:4px}
+.vc{flex:1 0 58px;display:flex;flex-direction:column;align-items:center}
+.vw{height:180px;width:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;border-bottom:1px solid var(--line);background:repeating-linear-gradient(to top,transparent 0,transparent 89px,var(--line) 89px,var(--line) 90px)}
+.vw b{font-size:12px;font-variant-numeric:tabular-nums;margin-bottom:2px}
+.vw i{display:block;width:70%;max-width:38px;background:var(--accent);opacity:.9;border-radius:5px 5px 0 0}
+.vn{font-size:12px;text-align:center;line-height:1.3;margin-top:4px;word-break:keep-all;overflow-wrap:anywhere}
+.axis{display:grid;grid-template-columns:104px 1fr;gap:8px;font-size:11px;color:var(--muted)}
+.axis div{display:flex;justify-content:space-between}
+h3{font-size:14px;margin:6px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips label{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:13px;cursor:pointer}
+.chips input{margin:0}
+.steps{margin:0;padding-left:1.3em;font-size:14px;line-height:1.7}
+.sn{margin-right:.3em}
+.sn:empty{display:none}
+#yrPill:empty{display:none}
+.hidden{display:none}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.drop:focus-within{outline:3px solid var(--hi);outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){button{transition:background .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>학업성취 내신 정리기</h1>
+    <p class="sub">학교알리미 교과별 학업성취 사항 파일(엑셀·CSV)을 올리면<br>과목별 분포, 등급 구조, 학교 요약, 차트를 만듭니다.<br>파일은 이 브라우저 안에서만 처리되고 어디에도 전송되지 않습니다.</p>
+  </header>
+  <p class="note" id="notice">비공식 도구입니다.<br>학교알리미에서 내려받은 교과별 학업성취사항 파일의 공시 수치를 정리해 보여줄 뿐이며,<br>정확한 내용은 학교알리미와 학교의 공식 자료에서 확인하세요.</p>
+
+  <section class="card" aria-label="파일 올리기">
+    <ol class="steps"><li>학교알리미에서 교과별 학업성취 사항 엑셀을 내려받습니다.</li><li>아래에 파일을 끌어다 놓거나 눌러서 선택합니다.</li><li>보고 싶은 과목을 고르면 분포와 평균이 표시됩니다.</li></ol>
+    <!-- TODO: 소개글 URL이 정해지면 아래 href를 그 주소로 바꾸세요 -->
+    <p class="sub"><a href="https://blog.naver.com/hello_junkong" target="_blank" rel="noopener">자세한 사용 방법은 블로그 글에서 확인하세요</a></p>
+    <label class="drop" id="drop" for="file">
+      <strong>파일을 끌어다 놓거나 눌러서 선택</strong>
+      <span class="sub">.xlsx .xls .csv</span>
+    </label>
+    <input type="file" id="file" class="vh">
+    <div class="row">
+      <button id="sample" type="button">예시 데이터로 보기</button>
+    </div>
+    <div class="row"><div class="field">학교 이름 (파일에서 못 찾으면 직접 입력)<input type="text" id="school" size="20" placeholder="예: ○○고등학교"></div></div>
+    <div id="sampleBanner" class="note hidden">지금 화면은 예시 데이터입니다.<br>파일을 올리면 이 학교 수치로 바뀝니다.</div>
+    <div id="status" class="sub" role="status"></div>
+    <details id="mapBox" class="hidden">
+      <summary>읽은 열 확인·수정</summary>
+      <p class="sub">제목 행에서 자동으로 찾은 열입니다.<br>결과가 이상하면 여기서 바꾸세요.</p>
+      <div class="map" id="map"></div>
+    </details>
+  </section>
+
+  <div id="out" class="hidden" style="display:flex;flex-direction:column;gap:16px">
+    <div class="hbox" id="showBox">
+      <label class="hl" for="show">표시 과목 선택</label>
+      <p class="sub">아래 모든 차트와 표에 적용됩니다.</p>
+      <select id="show" class="bigsel"><option value="main">주요 과목만 (국·수·영·사·과·한국사)</option><option value="all">전체 과목</option><option value="custom">직접 선택</option></select>
+      <div id="chips" class="chips hidden"></div>
+    </div>
+
+    <section class="card" aria-label="선택 과목의 단위수 가중 성취도">
+      <h2><span class="sn"></span><span id="wTitle">선택 과목의 단위수 가중 성취도</span> <span class="pill" id="yrPill"></span></h2>
+      <p class="sub" id="wSub">현재 선택한 과목 중<br>5단계 성취도(A~E)를 사용하는 과목을 대상으로<br>단위수를 반영해 계산한 분포입니다.<br>3단계 성취도(A~C) 과목은 포함되지 않으며,<br>학교 전체 교과의 성취도를 의미하지 않습니다.</p>
+      <div class="legend"><em class="la">A</em><em class="lb">B</em><em>C</em><em class="ld">D</em><em class="le">E</em></div>
+      <div class="ch" id="chGroups"></div>
+    </section>
+
+    <section class="card" aria-label="학년·학기 선택">
+      <div class="tabs" id="tabs" role="tablist"></div>
+    </section>
+
+    <section class="card" aria-label="표시 과목 요약">
+      <h2><span class="sn"></span>요약 <span class="pill">표시 중인 과목 기준</span></h2>
+      <div class="tiles" id="tiles"></div>
+      <p class="sub" id="tileNote"></p>
+    </section>
+
+    <section class="card" aria-label="한눈에 보기">
+      <h2><span class="sn"></span>한눈에 보기</h2>
+      <div class="legend"><em class="la">A</em><em class="lb">B</em><em>C</em><em class="ld">D</em><em class="le">E</em></div>
+      <h3 id="chSubTitle">과목별 성취도 구성</h3>
+      <div class="ch" id="chSubs"></div>
+      <div class="axis"><span></span><div><span>0%</span><span>50%</span><span>100%</span></div></div>
+      <div id="sub3Wrap" class="hidden">
+        <h3>A~C 3단계 과목 <span class="pill">5단계 과목과 합산·비교하지 않습니다</span></h3>
+        <div class="ch" id="chSubs3"></div>
+        <div class="axis"><span></span><div><span>0%</span><span>50%</span><span>100%</span></div></div>
+      </div>
+      <h3>과목별 평균 점수 <span class="pill">0~100점, 위 구성과 같은 순서</span></h3>
+      <p class="sub">학교알리미에 공시된 과목별 평균 점수입니다.<br>학교 간 비교나 시험 난이도 판단용이 아닙니다.</p>
+      <div class="vchart scroll" id="chAvg"></div>
+    </section>
+
+    <section class="card" aria-label="과목별 성취도 분포">
+      <h2><span class="sn"></span>과목별 성취도 분포</h2>
+      <h3 id="tblTitle"></h3>
+      <div class="legend"><em class="la">A</em><em class="lb">B</em><em>C</em><em class="ld">D</em><em class="le">E</em></div>
+      <div class="scroll"><table id="tbl"></table></div>
+    </section>
+
+    <section class="card" id="gradeCard" aria-label="등급 구조">
+      <h2><span class="sn"></span>등급 구조 요약</h2>
+      <p class="sub">5등급제는 2025학년도 입학생부터 적용됩니다.<br>2026학년도 3학년(2024학년도 이전 입학생)은 9등급제가 적용됩니다.<br><br>석차등급(1~5등급)은 상대평가 순위 비율로 정해지며,<br>A~E 성취도는 절대평가라 별개입니다.<br><br>체육·예술·과학탐구실험·교양 과목과<br>융합선택 중 사회·과학 교과 9과목은<br>석차등급 없이 성취도만 표기합니다.<br>(근거: 교육부 2028 대입제도 개편 확정안, 2023.12.27)</p>
+      <div class="hbox">
+        <p class="sub"><b>학년 전체 학생 수로 계산한 참고용 수치입니다.</b><br>실제 과목별 석차등급 인원이 아니며,<br>수강 인원이 다른 선택과목에는 맞지 않습니다.</p>
+        <label class="hl" for="head">이 학년 학생 수 입력 <span class="opt">(선택)</span></label>
+        <div class="hin"><input type="number" id="head" min="0" placeholder="예: 250"><span>명</span></div>
+        <p class="sub">입력하면 등급별 예상 인원이 표에 나옵니다.<br>학교알리미 "학생 현황"의 학년별 학생 수를 넣으세요.<br>비워 두어도 나머지 기능은 그대로 작동합니다.</p>
+      </div>
+      <p class="sub">이 계산은 2025학년도 입학생부터 적용되는 5등급제 기준입니다.</p>
+      <div class="scroll"><table id="gradeTbl"></table></div>
+    </section>
+    <p class="credit">학업성취 내신 정리기 · 끄적끄적 준콩 블로그 <a href="https://blog.naver.com/hello_junkong" target="_blank" rel="noopener">blog.naver.com/hello_junkong</a><br>© 2026 끄적끄적 준콩 · 무단 복제·재배포를 금지합니다.<br>비공식 도구이며 학교알리미 공시 수치를 정리해 보여줄 뿐입니다.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+var $=function(id){return document.getElementById(id)};
+var FIELDS=[['grade','학년'],['term','학기'],['subject','과목'],['unit','단위수'],['avg','평균'],['sd','표준편차'],['n','수강자수'],['A','A'],['B','B'],['C','C'],['D','D'],['E','E']];
+var state={year:'',rows:[],headers:[],colmap:{},raw:[],hdrEnd:0,cur:null,groups:[]};
+
+function num(v){
+  if(v===null||v===undefined||v==='')return null;
+  if(typeof v==='number')return isFinite(v)?v:null;
+  var s=String(v).replace(/[%,\s]/g,'');
+  if(s===''||s==='-')return null;
+  var x=parseFloat(s);return isNaN(x)?null:x;
+}
+function fmt(x,d){return x===null||x===undefined||isNaN(x)?'-':x.toFixed(d===undefined?1:d)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+
+/* ---------- 파일 읽기 ---------- */
+function parseCSV(text){
+  var rows=[],row=[],cur='',q=false;
+  for(var i=0;i<text.length;i++){
+    var c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}
+    else if(c==='"')q=true;
+    else if(c===','||c==='\t'){row.push(cur);cur=''}
+    else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur=''}
+    else if(c!=='\r')cur+=c;
+  }
+  if(cur!==''||row.length){row.push(cur);rows.push(row)}
+  return rows.map(function(r){return r.map(function(v){v=v.trim();return v===''?null:(isNaN(Number(v.replace(/,/g,'')))?v:Number(v.replace(/,/g,'')))})}).filter(function(r){return r.some(function(v){return v!==null})});
+}
+function decodeText(buf){
+  try{return new TextDecoder('utf-8',{fatal:true}).decode(buf)}
+  catch(e){try{return new TextDecoder('euc-kr').decode(buf)}catch(e2){return new TextDecoder().decode(buf)}}
+}
+function parseHTMLTables(text){
+  var doc=new DOMParser().parseFromString(text,'text/html'),out=[];
+  Array.prototype.forEach.call(doc.querySelectorAll('table'),function(tb){
+    if(tb.querySelector('table'))return;
+    var grid=[],trs=tb.querySelectorAll('tr');
+    Array.prototype.forEach.call(trs,function(tr,ri){
+      grid[ri]=grid[ri]||[];var ci=0;
+      Array.prototype.forEach.call(tr.children,function(cell){
+        if(!/^(TD|TH)$/.test(cell.tagName))return;
+        while(grid[ri][ci]!==undefined)ci++;
+        var t=cell.textContent.replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim();
+        var v=t===''?null:t;
+        if(v!==null){var n=Number(v.replace(/,/g,''));if(!isNaN(n)&&/^-?[\d.,]+$/.test(v))v=n}
+        var cs=parseInt(cell.getAttribute('colspan')||'1',10)||1,rs=parseInt(cell.getAttribute('rowspan')||'1',10)||1;
+        for(var r=0;r<rs;r++){grid[ri+r]=grid[ri+r]||[];for(var c=0;c<cs;c++)grid[ri+r][ci+c]=v}
+        ci+=cs;
+      });
+    });
+    var aoa=grid.map(function(r){var a=[];for(var i=0;i<r.length;i++)a.push(r[i]===undefined?null:r[i]);return a}).filter(function(r){return r.some(function(v){return v!==null})});
+    if(aoa.length)out.push(aoa);
+  });
+  return out;
+}
+function looksHTML(buf){
+  var head=new Uint8Array(buf.slice(0,4000)),str='';
+  for(var i=0;i<head.length;i++)str+=String.fromCharCode(head[i]);
+  return /<\s*(html|table|meta|head|body)\b/i.test(str);
+}
+function isMid(){return /중학교/.test($('school').value)}
+function updateSchool(){
+  var v=$('school').value.trim();
+  Array.prototype.forEach.call(document.querySelectorAll('.sn'),function(e){e.textContent=v});
+  var mid=isMid(),tail='3단계 성취도(A~C) 과목은 포함되지 않으며,<br>학교 전체 교과의 성취도를 의미하지 않습니다.';
+  if($('gradeCard'))$('gradeCard').classList.toggle('hidden',mid);
+  if($('wTitle'))$('wTitle').textContent=mid?'선택 과목의 성취도 (과목 단순 평균)':'선택 과목의 단위수 가중 성취도';
+  if($('wSub'))$('wSub').innerHTML='현재 선택한 과목 중<br>5단계 성취도(A~E)를 사용하는 과목을 대상으로<br>'+(mid?'과목을 같은 비중으로 평균낸 분포입니다.':'단위수를 반영해 계산한 분포입니다.')+'<br>'+tail;
+  if(state&&state.rows&&state.rows.length&&$('tiles')){try{renderTiles()}catch(e){}}
+}
+function findYear(sheets,rawText){
+  var re=/(20\d\d)\s*학년도/;
+  for(var k=0;k<sheets.length;k++){
+    var rows=(sheets[k].aoa||[]).slice(0,20);
+    for(var i=0;i<rows.length;i++){
+      var r=rows[i]||[];
+      for(var c=0;c<r.length;c++){if(typeof r[c]==='string'){var m=r[c].match(re);if(m)return m[1]}}
+    }
+  }
+  if(rawText){var m2=rawText.replace(/<[^>]+>/g,' ').match(re);if(m2)return m2[1]}
+  return '';
+}
+function yl(){return state.year?state.year+'학년도 ':''}
+function findSchool(sheets,fname,rawText){
+  var re=/([가-힣]{2,12}(?:여자고등학교|고등학교|중학교))/;
+  var lab=/학교\s*[:：]\s*([가-힣]{2,12}(?:여자고등학교|고등학교|중학교))/;
+  if(rawText){var tx=rawText.replace(/<[^>]+>/g,' '),ml=tx.match(lab);if(ml)return ml[1]}
+  for(var q=0;q<sheets.length;q++){
+    var all=sheets[q].aoa||[];
+    for(var w=all.length-1;w>=0;w--){
+      var rr=all[w]||[];
+      for(var z=0;z<rr.length;z++){if(typeof rr[z]==='string'){var m0=rr[z].match(lab);if(m0)return m0[1]}}
+    }
+  }
+  for(var k=0;k<sheets.length;k++){
+    var rows=(sheets[k].aoa||[]).slice(0,15);
+    for(var i=0;i<rows.length;i++){
+      var r=rows[i]||[];
+      for(var c=0;c<r.length;c++){
+        if(typeof r[c]==='string'){var m=r[c].match(re);if(m)return m[1]}
+      }
+    }
+  }
+  var base=(fname||'').replace(/\.[^.]*$/,''),m2=base.match(re);
+  if(m2)return m2[1];
+  var m3=base.match(/([가-힣]{2,6})고(?![가-힣])/);
+  return m3?m3[1]+'고등학교':'';
+}
+function handleFile(f,done){
+  if(!f)return;
+  var fin=function(){if(done)done()};
+  $('status').textContent='읽는 중… '+f.name;
+  var rd=new FileReader();
+  rd.onerror=function(){$('status').textContent='파일을 열지 못했습니다. 다른 앱에서 열려 있지 않은지 확인하고 다시 시도해 주세요.';fin()};
+  rd.onload=function(e){
+    try{
+      var rawTxt='',buf=e.target.result,sheets=[],isCsv=/\.(csv|txt)$/i.test(f.name);
+      if(looksHTML(buf)){
+        rawTxt=decodeText(buf);parseHTMLTables(rawTxt).forEach(function(a,i){sheets.push({name:'html'+i,aoa:a})});
+      }else if(isCsv||typeof XLSX==='undefined'){
+        if(!isCsv){$('status').textContent='엑셀 읽기 기능을 불러오지 못했습니다. 파일을 CSV로 저장해서 올려 주세요.';return}
+        sheets.push({name:'csv',aoa:parseCSV(decodeText(buf))});
+      }else{
+        var wb=XLSX.read(buf,{type:'array'});
+        wb.SheetNames.forEach(function(nm){sheets.push({name:nm,aoa:XLSX.utils.sheet_to_json(wb.Sheets[nm],{header:1,raw:true,defval:null,blankrows:false})})});
+      }
+      var best=null;
+      var wrows=[],whdr=null;
+      sheets.forEach(function(sh){var det=detect(sh.aoa);if(!det)return;if(det.wide){wrows=wrows.concat(det.rows);whdr=det.hdr}else if(!best||det.score>best.score)best=det});
+      if(wrows.length){var raw=[whdr].concat(wrows);best={raw:raw,headers:whdr,hdrEnd:0,map:autoMap(whdr),score:999}}
+      if(!best){
+        var first=(sheets[0]&&sheets[0].aoa||[]).slice(0,4).map(function(r){return (r||[]).filter(function(v){return v!==null}).join(' | ')}).join(' // ');
+        try{console.log('읽힌 첫 줄들:',first)}catch(e3){}
+        showBad();$('out').classList.add('hidden');$('out').style.display='none';
+        return;
+      }
+      $('sampleBanner').classList.add('hidden');
+      $('school').value=findSchool(sheets,f.name,rawTxt);state.year=findYear(sheets,rawTxt);updateSchool();
+      state.raw=best.raw;state.headers=best.headers;state.hdrEnd=best.hdrEnd;state.colmap=best.map;state.cur=null;
+      $('status').textContent=f.name+' 을(를) 읽었습니다.';
+      buildMap();process();
+      try{$('out').scrollIntoView({behavior:'smooth',block:'start'})}catch(e2){}
+    }catch(err){$('status').textContent='파일을 읽지 못했습니다: '+err.message}
+    finally{fin()}
+  };
+  rd.readAsArrayBuffer(f);
+}
+function wideDetect(aoa){
+  function norm(v){return v===null||v===undefined?'':String(v).replace(/\s+/g,'')}
+  var lim=Math.min(aoa.length,30),lr=-1,cols=[],i,c,r;
+  for(i=0;i<lim;i++){
+    var row=aoa[i]||[],hits=[];
+    for(c=0;c<row.length;c++){var t=norm(row[c]);if(/^[A-E]$/.test(t))hits.push([c,t])}
+    if(hits.length>=5){lr=i;cols=hits;break}
+  }
+  if(lr<0){
+    for(i=1;i<lim;i++){
+      var row2=aoa[i]||[],idx=[];
+      for(c=0;c<row2.length;c++){if(/분포/.test(norm(row2[c])))idx.push(c)}
+      if(idx.length>=5){
+        lr=i;var run=[];
+        idx.forEach(function(x,k){if(k>0&&x!==idx[k-1]+1)run=[];run.push(x);if(run.length<=5)cols.push([x,'ABCDE'.charAt(run.length-1)])});
+        break;
+      }
+    }
+  }
+  if(lr<0)return null;
+  var top=Math.max(0,lr-6),w=0;
+  for(r=top;r<=lr;r++)w=Math.max(w,(aoa[r]||[]).length);
+  function gt(col){
+    var g=0,t=0;
+    for(var rr=top;rr<=lr;rr++){
+      var tx=norm((aoa[rr]||[])[col]),m1=tx.match(/(\d)학년(?!도)/),m2=tx.match(/(\d)학기/);
+      if(m1&&!g)g=parseInt(m1[1],10);if(m2&&!t)t=parseInt(m2[1],10);
+    }
+    return [g,t];
+  }
+  var groups={},any=false;
+  cols.forEach(function(x){
+    var k=gt(x[0]);if(k[0]||k[1])any=true;
+    var key=k[0]+'-'+k[1];groups[key]=groups[key]||{g:k[0],t:k[1]||1,L:{}};groups[key].L[x[1]]=x[0];
+  });
+  if(!any)return null;
+  function findCol(g,re,excl){
+    for(var cc=0;cc<w;cc++){
+      var k=gt(cc);if(k[0]!==g.g||(k[1]||1)!==g.t)continue;
+      for(var rr=top;rr<=lr;rr++){var tx=norm((aoa[rr]||[])[cc]);if(re.test(tx)&&!(excl&&excl.test(tx)))return cc}
+    }
+    return undefined;
+  }
+  var subj;
+  for(c=0;c<w&&subj===undefined;c++){for(r=top;r<=lr;r++){if(/^과목(명)?$/.test(norm((aoa[r]||[])[c]))){subj=c;break}}}
+  if(subj===undefined)subj=1;
+  var hdr=['학년','학기','과목','단위수','평균','표준편차','수강자수','A','B','C','D','E'],out=[];
+  var gl=Object.keys(groups).map(function(k){return groups[k]}).sort(function(a,b){return a.g-b.g||a.t-b.t});
+  gl.forEach(function(g){g.avg=findCol(g,/평균/,/표준/);g.sd=findCol(g,/표준편차/);g.n=findCol(g,/수강|인원/)});
+  for(r=lr+1;r<aoa.length;r++){
+    var rw=aoa[r]||[],sub=rw[subj];
+    if(sub===null||sub===undefined||String(sub).trim()==='')continue;
+    gl.forEach(function(g){
+      var d=['A','B','C','D','E'].map(function(L){return g.L[L]===undefined?null:num(rw[g.L[L]])});
+      var avg=g.avg===undefined?null:num(rw[g.avg]);
+      if(avg===null&&d.every(function(v){return v===null}))return;
+      out.push([g.g,g.t,String(sub).replace(/\s+/g,' ').trim(),null,avg,g.sd===undefined?null:num(rw[g.sd]),g.n===undefined?null:num(rw[g.n])].concat(d));
+    });
+  }
+  if(!out.length)return null;
+  return {wide:true,rows:out,hdr:hdr};
+}
+function detect(aoa){
+  var wd=wideDetect(aoa);if(wd)return wd;
+  var limit=Math.min(aoa.length,25),hdrStart=-1,hdrEnd=-1;
+  for(var i=0;i<limit;i++){
+    var cells=(aoa[i]||[]).map(function(c){return c===null?'':String(c).trim()});
+    var letters=cells.filter(function(c){return /^[A-E]\s*(\(%\))?$|[^A-Za-z][A-E]$/.test(c)}).length;
+    var hasSub=cells.some(function(c){return /과목/.test(c)});
+    if(letters>=3||(hasSub&&i<limit)){hdrStart=hdrStart<0?i:hdrStart;hdrEnd=i;if(letters>=3)break;}
+  }
+  if(hdrEnd<0)return null;
+  var top=Math.max(0,hdrEnd-2),w=0;
+  for(var r=top;r<=hdrEnd;r++)w=Math.max(w,(aoa[r]||[]).length);
+  var headers=[];
+  for(var c=0;c<w;c++){
+    var parts=[],last=null;
+    for(var r2=top;r2<=hdrEnd;r2++){
+      var v=(aoa[r2]||[])[c];
+      if(v!==null&&v!==undefined&&String(v).trim()!==''){var t=String(v).replace(/\s+/g,' ').trim();if(t!==last)parts.push(t);last=t;}
+    }
+    headers.push(parts.join(' '));
+  }
+  var map=autoMap(headers);
+  if(map.subject===undefined)return null;
+  var score=Object.keys(map).length;
+  return {raw:aoa,headers:headers,hdrEnd:hdrEnd,map:map,score:score};
+}
+function autoMap(h){
+  var m={};
+  function find(test,skip){for(var i=0;i<h.length;i++){if(m_has(m,i))continue;if(test((h[i]||'').replace(/\s+/g,'')))return i;}return undefined}
+  function m_has(mm,i){for(var k in mm)if(mm[k]===i)return true;return false}
+  var g=find(function(s){return /학년/.test(s)&&!/학년도/.test(s)});if(g!==undefined)m.grade=g;
+  var t=find(function(s){return /학기/.test(s)});if(t!==undefined)m.term=t;
+  var sb=find(function(s){return /과목/.test(s)&&!/과목군|과목수/.test(s)});if(sb===undefined)sb=find(function(s){return /교과/.test(s)});if(sb!==undefined)m.subject=sb;
+  var u=find(function(s){return /단위|학점/.test(s)});if(u!==undefined)m.unit=u;
+  var sd=find(function(s){return /표준편차/.test(s)});if(sd!==undefined)m.sd=sd;
+  var a=find(function(s){return /평균/.test(s)&&!/표준/.test(s)});if(a!==undefined)m.avg=a;
+  var n=find(function(s){return /수강자|수강 인원|이수자|인원/.test(s)});if(n!==undefined)m.n=n;
+  ['A','B','C','D','E'].forEach(function(L){
+    var re=new RegExp('(^|[^A-Za-z])'+L+'\\s*(\\(%\\))?$');
+    var i=find(function(s){return re.test(s.trim())});if(i!==undefined)m[L]=i;
+  });
+  return m;
+}
+function buildMap(){
+  var box=$('map');box.innerHTML='';
+  FIELDS.forEach(function(f){
+    var d=document.createElement('div');d.className='field';
+    var lab=document.createElement('label');lab.textContent=f[1];lab.setAttribute('for','m_'+f[0]);
+    var sel=document.createElement('select');sel.id='m_'+f[0];
+    var o0=document.createElement('option');o0.value='';o0.textContent='(없음)';sel.appendChild(o0);
+    state.headers.forEach(function(h,i){var o=document.createElement('option');o.value=i;o.textContent=(i+1)+'열 '+(h||'(빈 제목)').slice(0,20);sel.appendChild(o)});
+    var cur=state.colmap[f[0]];sel.value=cur===undefined?'':cur;
+    sel.addEventListener('change',function(){
+      if(sel.value==='')delete state.colmap[f[0]];else state.colmap[f[0]]=parseInt(sel.value,10);
+      process();
+    });
+    d.appendChild(lab);d.appendChild(sel);box.appendChild(d);
+  });
+  $('mapBox').classList.remove('hidden');
+}
+
+/* ---------- 행 → 과목 ---------- */
+var BAD_MSG='이 파일은 교과별 학업성취 사항 파일이 아닌 것 같습니다. 학교알리미 > 공시정보 > 학업성취사항 > 교과별 학업성취 사항에서 학년과 학기를 고른 뒤 엑셀 파일을 내려받아 올려 주세요.';
+function showBad(){$('status').textContent=BAD_MSG}
+function process(){
+  var m=state.colmap,rows=[],gr=null,tm=null,skipped=[],nounit=[];
+  if(m.subject===undefined){$('status').textContent='과목 열을 지정해 주세요.';return}
+  for(var i=state.hdrEnd+1;i<state.raw.length;i++){
+    var r=state.raw[i]||[];
+    var sub=r[m.subject];if(sub===null||sub===undefined||String(sub).trim()==='')continue;
+    sub=String(sub).replace(/\s+/g,' ').trim();
+    if(/^(합계|계|평균|소계)$/.test(sub))continue;
+    if(m.grade!==undefined&&r[m.grade]!==null&&r[m.grade]!==undefined&&String(r[m.grade]).trim()!=='')gr=parseGrade(r[m.grade]);
+    if(m.term!==undefined&&r[m.term]!==null&&r[m.term]!==undefined&&String(r[m.term]).trim()!=='')tm=parseTerm(r[m.term]);
+    var unit=m.unit!==undefined?num(r[m.unit]):null;
+    var nm=sub;
+    var mm=sub.match(/^(.*?)\s*[\(（]\s*(\d+(?:\.\d+)?)\s*[\)）]\s*$/);
+    if(mm){nm=mm[1];if(unit===null)unit=parseFloat(mm[2]);}
+    var d={};
+    ['A','B','C','D','E'].forEach(function(L){d[L]=m[L]!==undefined?num(r[m[L]]):null});
+    var any=['A','B','C','D','E'].some(function(L){return d[L]!==null});
+    var avg=m.avg!==undefined?num(r[m.avg]):null;
+    if(!any&&avg===null)continue;
+    var three=(d.D===null&&d.E===null&&any);
+    if(unit===null)nounit.push(nm);
+    if(three&&any){
+      var sABC=(d.A||0)+(d.B||0)+(d.C||0);
+      if(d.A===null||d.B===null||d.C===null||Math.abs(sABC-100)>1.5){skipped.push(nm);continue}
+    }
+    rows.push({grade:gr||0,term:tm||1,name:nm,unit:unit,avg:avg,sd:m.sd!==undefined?num(r[m.sd]):null,n:m.n!==undefined?num(r[m.n]):null,d:d,three:three,noDist:!any});
+  }
+  state.rows=rows;
+  var keys={};rows.forEach(function(r){keys[r.grade+'-'+r.term]=[r.grade,r.term]});
+  state.groups=Object.keys(keys).map(function(k){return keys[k]}).sort(function(a,b){return a[0]-b[0]||a[1]-b[1]});
+  if(!rows.length){showBad();$('out').classList.add('hidden');$('out').style.display='none';return}
+  $('out').classList.remove('hidden');$('out').style.display='flex';
+  if(!state.cur||!keys[state.cur.join('-')]){state.cur=state.groups[0];}
+  $('status').textContent=$('status').textContent.split(' / ')[0]+' / '+rows.length+'개 과목 줄, '+state.groups.length+'개 학년·학기'+(nounit.length?(isMid()?' / 이 파일에는 단위수가 없어 과목을 같은 비중으로 계산했습니다':' / 단위수를 읽지 못한 과목 '+nounit.length+'개는 1단위로 계산했습니다'):'')+(rows.some(function(r){return r.noDist})?' / 성취도 분포가 없는 과목 '+rows.filter(function(r){return r.noDist}).length+'개는 평균 점수만 표시합니다':'')+(skipped.length?' / 값이 빠졌거나 합이 맞지 않는 줄 '+skipped.length+'개는 계산에서 제외했습니다 ('+skipped.slice(0,3).join(', ')+(skipped.length>3?' 등':'')+')':'');
+  render();
+}
+function josa(w,a,b){
+  var ch=w.charAt(w.length-1),c=ch.charCodeAt(0),f;
+  if(c>=0xAC00&&c<=0xD7A3)f=(c-0xAC00)%28!==0;
+  else if('Ⅰ'===ch||'Ⅲ'===ch||/[0136780]/.test(ch))f=true;
+  else if('Ⅱ'===ch||/[2459]/.test(ch))f=false;
+  else f=false;
+  return w+(f?a:b);
+}
+function parseGrade(v){var x=parseInt(String(v).replace(/[^0-9]/g,''),10);return isNaN(x)?0:x}
+function parseTerm(v){var x=parseInt(String(v).replace(/[^0-9]/g,''),10);return isNaN(x)?1:x}
+function gLabel(g){return g?g+'학년':'학년 미표기'}
+var MAIN=/국어|문학|화법|독서|언어|수학|대수|미적분|기하|확률|영어|한국사|사회|역사|과학|물리|화학|생명|지구|통합/;
+state.custom={};
+function allRows(){return state.rows.filter(function(r){return r.grade===state.cur[0]&&r.term===state.cur[1]})}
+function visible(r){var mode=$('show').value;return mode==='all'?true:mode==='main'?MAIN.test(r.name):!!state.custom[r.name]}
+function curRows(){return allRows().filter(visible)}
+function renderChips(){
+  var box=$('chips'),mode=$('show').value;
+  if(mode!=='custom'){box.classList.add('hidden');return}
+  box.classList.remove('hidden');
+  var seen={},h='';
+  allRows().forEach(function(r){if(seen[r.name])return;seen[r.name]=1;h+='<label><input type="checkbox" data-n="'+esc(r.name)+'"'+(state.custom[r.name]?' checked':'')+'>'+esc(r.name)+'</label>'});
+  box.innerHTML=h;
+  Array.prototype.forEach.call(box.querySelectorAll('input'),function(i){i.addEventListener('change',function(){state.custom[i.dataset.n]=i.checked;renderTiles();renderCharts();renderTable();renderGrades()})});
+}
+
+/* ---------- 계산 ---------- */
+function wavg(rows,f){
+  var s=0,w=0;
+  rows.forEach(function(r){var v=f(r);if(v===null||v===undefined)return;var u=r.unit||1;s+=v*u;w+=u});
+  return w?s/w:null;
+}
+function summary(rows){
+  var five=rows.filter(function(r){return !r.three&&!r.noDist});
+  return {
+    n:rows.length,units:rows.reduce(function(a,r){return a+(r.unit||0)},0),
+    avg:wavg(rows,function(r){return r.avg}),
+    a:wavg(five,function(r){return r.d.A}),
+    ab:wavg(five,function(r){return r.d.A===null||r.d.B===null?null:r.d.A+r.d.B}),
+    de:wavg(five,function(r){return (r.d.D||0)+(r.d.E||0)}),
+    three:rows.filter(function(r){return r.three}).length,five:five
+  };
+}
+function main3(rows){
+  var out=[];
+  [['국어',/국어|문학|화법|독서|언어/],['수학',/수학|대수|미적분|기하|확률/],['영어',/영어/]].forEach(function(p){
+    var f=rows.filter(function(r){return p[1].test(r.name)});
+    f.forEach(function(r){out.push([p[0],r])});
+  });
+  return out;
+}
+
+/* ---------- 그리기 ---------- */
+function render(){
+  renderTabs();renderChips();renderTiles();renderCharts();renderTable();renderGrades();
+}
+
+function stack(d){
+  var h='<div class="stk" role="img" aria-label="성취도 구성">';
+  ['A','B','C','D','E'].forEach(function(L){var v=d[L];if(v===null||v===undefined)return;var t=(Math.round(v*10)/10).toFixed(1);h+='<span class="s'+L+(v<8?' sm':'')+'" style="width:'+v+'%" title="'+L+' '+t+'%">'+(v>=6.5?t:'')+'</span>'});
+  return h+'</div>';
+}
+function renderCharts(){
+  $('yrPill').textContent=state.year?state.year+'학년도 공시':'';
+  var g='';
+  state.groups.forEach(function(gr){
+    var rows=state.rows.filter(function(r){return r.grade===gr[0]&&r.term===gr[1]&&!r.three&&!r.noDist&&visible(r)});
+    if(!rows.length)return;
+    var d={};['A','B','C','D','E'].forEach(function(L){d[L]=wavg(rows,function(r){return r.d[L]})});
+    g+='<div class="chr"><div class="lb2">'+gLabel(gr[0])+' '+gr[1]+'학기</div>'+stack(d)+'</div>';
+  });
+  var allNo=state.rows.length&&state.rows.every(function(r){return r.noDist});
+  var noDistMsg='<p class="sub">이 파일에는 성취도 분포가 없어 평균 점수만 표시합니다.<br>학교에 따라 성취도 분포를 공시하지 않을 수 있습니다.</p>';
+  $('chGroups').innerHTML=g||(allNo?noDistMsg:'<p class="sub">A~E 5단계 과목이 없습니다.</p>');
+  var rows=curRows();
+  var cnt={};rows.forEach(function(r){cnt[r.name]=(cnt[r.name]||0)+1});
+  function nm(r){return cnt[r.name]>1&&r.unit!==null?r.name+' ('+r.unit+')':r.name}
+  $('chSubTitle').textContent=yl()+gLabel(state.cur[0])+' '+state.cur[1]+'학기 과목별 성취도 구성';
+  var five5=rows.filter(function(r){return !r.three&&!r.noDist}),three3=rows.filter(function(r){return r.three});
+  function subRow(r){return '<div class="chr"><div class="lb2" title="'+esc(nm(r))+'">'+esc(nm(r))+'</div>'+stack(r.d)+'</div>'}
+  $('chSubs').innerHTML=five5.map(subRow).join('')||(allNo?noDistMsg:'<p class="sub">A~E 5단계 과목이 없습니다.</p>');
+  $('chSubs3').innerHTML=three3.map(subRow).join('');
+  $('sub3Wrap').classList.toggle('hidden',!three3.length);
+  rows=five5.concat(three3);
+  var sorted=rows.filter(function(r){return r.avg!==null});
+  $('chAvg').innerHTML=sorted.length?sorted.map(function(r){return '<div class="vc"><div class="vw" role="img" aria-label="'+esc(nm(r))+' 평균 '+fmt(r.avg)+'점"><b>'+fmt(r.avg)+'</b><i style="height:'+Math.round(Math.min(100,r.avg)*1.6)+'px"></i></div><div class="vn">'+esc(nm(r))+'</div></div>'}).join(''):'<p class="sub">평균 점수 열이 없습니다.</p>';
+}
+function pc(x){return x===null||x===undefined||isNaN(x)?'-':fmt(x)+'%'}
+function renderTiles(){
+  var s=summary(curRows());
+  var T=[[s.n+'과목','표시 중인 과목'],[fmt(s.avg),isMid()?'평균 점수 · 단순 평균':'평균 점수 · 단위수 가중'],[pc(s.a),'A 성취도 비율 · 5단계 과목'],[pc(s.ab),'A·B 성취도 비율 · 5단계 과목'],[pc(s.de),'D·E 성취도 비율 · 5단계 과목'],[s.three+'과목','A~C 3단계 과목 (비율에서 제외)']];
+  $('tileNote').textContent='절대평가 성취도 기준이며 석차 순위와 다릅니다. '+(isMid()?'과목 단순 평균 값입니다.':'단위수를 반영한 값입니다.');
+  $('tiles').innerHTML=T.map(function(t){return '<div class="tile"><b>'+esc(t[0])+'</b><span>'+esc(t[1])+'</span></div>'}).join('');
+}
+function renderTabs(){
+  var h='';
+  state.groups.forEach(function(g){
+    var sel=g[0]===state.cur[0]&&g[1]===state.cur[1];
+    h+='<button type="button" role="tab" aria-selected="'+sel+'" data-g="'+g[0]+'" data-t="'+g[1]+'">'+gLabel(g[0])+' '+g[1]+'학기</button>';
+  });
+  $('tabs').innerHTML=h;
+  Array.prototype.forEach.call($('tabs').querySelectorAll('button'),function(b){
+    b.addEventListener('click',function(){state.cur=[parseInt(b.dataset.g,10),parseInt(b.dataset.t,10)];render()});
+  });
+}
+function bar(d){
+  var cols={A:'var(--a)',B:'var(--b)',C:'var(--c)',D:'var(--d)',E:'var(--e)'},h='<div class="bar" role="img" aria-label="성취도 분포 막대">';
+  ['A','B','C','D','E'].forEach(function(L){if(d[L])h+='<i style="width:'+d[L]+'%;background:'+cols[L]+'"></i>'});
+  return h+'</div>';
+}
+function renderTable(){
+  var rows=curRows();
+  if(state.cur)$('tblTitle').textContent=yl()+gLabel(state.cur[0])+' '+state.cur[1]+'학기';
+  var h='<thead><tr><th>과목(단위)</th><th>평균</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th class="l">분포</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    h+='<tr><td>'+esc(r.name)+(r.unit!==null?' ('+r.unit+')':'')+(r.three?'<span class="pill">A~C</span>':'')+'</td><td>'+fmt(r.avg)+'</td>'+
+      ['A','B','C','D','E'].map(function(L){return '<td>'+fmt(r.d[L])+'</td>'}).join('')+'<td class="l">'+bar(r.d)+'</td></tr>';
+  });
+  $('tbl').innerHTML=h+'</tbody>';
+}
+var P5=[10,24,32,24,10];
+function gradeTable(P,head){
+  var cum=0;
+  var h='<thead><tr><th>등급</th><th>비율(%)</th><th>누적(%)</th>'+(head?'<th>예상 인원(명)</th><th>누적 인원(명)</th>':'')+'</tr></thead><tbody>';
+  P.forEach(function(p,i){
+    cum+=p;
+    h+='<tr><td>'+(i+1)+'등급</td><td>'+p+'</td><td>'+cum+'</td>'+(head?'<td>'+Math.round(head*p/100)+'</td><td>'+Math.round(head*cum/100)+'</td>':'')+'</tr>';
+  });
+  return h+'</tbody>';
+}
+function renderGrades(){
+  $('gradeTbl').innerHTML=gradeTable(P5,num($('head').value));
+}
+/* ---------- 복사 ---------- */
+function copyText(text,html,msgId){
+  var msg=$(msgId);
+  function ok(){msg.textContent='복사했습니다.'}
+  function fail(){msg.textContent='복사하지 못했습니다. 직접 선택해서 복사해 주세요.'}
+  try{
+    if(html&&window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){
+      navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([text],{type:'text/plain'})})]).then(ok,function(){fb()});
+    }else if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(ok,function(){fb()})}
+    else fb();
+  }catch(e){fb()}
+  function fb(){
+    try{var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();var r=document.execCommand('copy');document.body.removeChild(ta);r?ok():fail()}catch(e){fail()}
+  }
+}
+/* ---------- 입력 이벤트 ---------- */
+var drop=$('drop'),fi=$('file');
+var busy=false;
+function onPick(){var f=fi.files&&fi.files[0];if(!f||busy)return;busy=true;
+  $('status').textContent='선택한 파일: '+f.name+' ('+Math.max(1,Math.round(f.size/1024))+'KB) — 읽는 중…';
+  var wd=setTimeout(function(){if(busy)$('status').textContent='읽기가 끝나지 않습니다. 앱 안의 화면이라면 폰 브라우저(크롬·사파리)에서 주소를 직접 열어 다시 시도해 주세요.'},8000);
+  handleFile(f,function(){busy=false;clearTimeout(wd);try{fi.value=''}catch(e){}})}
+window.addEventListener('error',function(e){try{$('status').textContent='오류: '+(e.message||'알 수 없는 오류')}catch(x){}});
+fi.addEventListener('change',onPick);fi.addEventListener('input',onPick);
+['dragenter','dragover'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('over')})});
+['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('over')})});
+drop.addEventListener('drop',function(e){handleFile(e.dataTransfer.files[0])});
+$('school').addEventListener('input',updateSchool);
+$('show').addEventListener('change',function(){
+  if($('show').value==='custom'&&!Object.keys(state.custom).some(function(k){return state.custom[k]})){allRows().forEach(function(r){if(MAIN.test(r.name))state.custom[r.name]=true})}
+  render();
+});
+$('head').addEventListener('input',renderGrades);
+
+/* ---------- 예시 ---------- */
+function sample(){
+  state.year='';
+  var S=[['공통국어1',4,74.9,15.4,33.5,19.5,16.9,14.7],['공통수학1',4,61.6,5.6,15.8,19.2,16.2,43.2],['공통영어1',4,72.0,20.7,21.4,18.0,12.8,27.1],['한국사1',3,69.1,17.3,17.3,12.4,16.5,36.5],['통합사회1',3,76.4,23.7,26.7,19.2,15.4,15.0],['통합과학1',3,77.4,23.7,28.2,18.4,17.3,12.4],['과학탐구실험1',1,88.5,87.2,9.8,3.0,null,null],['체육1',2,82.7,69.5,24.8,5.6,null,null],['음악',2,86.6,83.2,12.2,4.6,null,null],['미술',2,80.7,58.5,33.3,8.1,null,null],['기술·가정',3,82.3,20.0,51.9,22.2,2.2,3.7],['한문',3,65.2,6.9,15.3,18.3,19.1,40.5]];
+  var aoa=[['학년','학기','과목','단위수','평균','A','B','C','D','E']];
+  S.forEach(function(s,i){aoa.push([i===0?'1':null,i===0?'1':null,s[0],s[1],s[2],s[3],s[4],s[5],s[6],s[7]])});
+  state.raw=aoa;state.headers=aoa[0];state.hdrEnd=0;state.colmap=autoMap(aoa[0]);state.cur=null;
+  $('sampleBanner').classList.remove('hidden');
+  $('status').textContent='예시 데이터(1학년 1학기)를 보고 있습니다.';
+  buildMap();process();
+}
+$('sample').addEventListener('click',sample);
+window.__test={handle:handleFile,sample:sample};
+sample();
+})();
+</script>
+</body>
+</html>
