@@ -61,7 +61,7 @@ input[type=text],input[type=number],select{border:1px solid var(--line);backgrou
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .tile{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--card)}
 .tile b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
-.tile span{font-size:12px;color:var(--muted)}
+.tile span{font-size:12px;color:var(--muted);word-break:keep-all}
 .tabs{display:flex;flex-wrap:wrap;gap:6px}
 .tabs button[aria-selected=true]{background:var(--accent);color:#fff}
 .scroll{overflow-x:auto}
@@ -269,13 +269,14 @@ function looksHTML(buf){
   return /<\s*(html|table|meta|head|body)\b/i.test(str);
 }
 function isMid(){return /중학교/.test($('school').value)}
+function eqW(){return isMid()||(state.rows.length>0&&state.rows.every(function(r){return r.unit===null||r.unit===undefined}))}
 function updateSchool(){
   var v=$('school').value.trim();
   Array.prototype.forEach.call(document.querySelectorAll('.sn'),function(e){e.textContent=v});
-  var mid=isMid(),tail='3단계 성취도(A~C) 과목은 포함되지 않으며,<br>학교 전체 교과의 성취도를 의미하지 않습니다.';
+  var mid=isMid(),eq=eqW(),tail='3단계 성취도(A~C) 과목은 포함되지 않으며,<br>학교 전체 교과의 성취도를 의미하지 않습니다.';
   if($('gradeCard'))$('gradeCard').classList.toggle('hidden',mid);
-  if($('wTitle'))$('wTitle').textContent=mid?'선택 과목의 성취도 (과목 단순 평균)':'선택 과목의 단위수 가중 성취도';
-  if($('wSub'))$('wSub').innerHTML='현재 선택한 과목 중<br>5단계 성취도(A~E)를 사용하는 과목을 대상으로<br>'+(mid?'과목을 같은 비중으로 평균낸 분포입니다.':'단위수를 반영해 계산한 분포입니다.')+'<br>'+tail;
+  if($('wTitle'))$('wTitle').textContent=eq?'선택 과목의 성취도 (과목 단순 평균)':'선택 과목의 단위수 가중 성취도';
+  if($('wSub'))$('wSub').innerHTML='현재 선택한 과목 중<br>5단계 성취도(A~E)를 사용하는 과목을 대상으로<br>'+(eq?'과목을 같은 비중으로 평균낸 분포입니다.':'단위수를 반영해 계산한 분포입니다.')+'<br>'+tail;
   if(state&&state.rows&&state.rows.length&&$('tiles')){try{renderTiles()}catch(e){}}
 }
 function findYear(sheets,rawText){
@@ -508,13 +509,13 @@ function process(){
     }
     rows.push({grade:gr||0,term:tm||1,name:nm,unit:unit,avg:avg,sd:m.sd!==undefined?num(r[m.sd]):null,n:m.n!==undefined?num(r[m.n]):null,d:d,three:three,noDist:!any});
   }
-  state.rows=rows;
+  state.rows=rows;updateSchool();
   var keys={};rows.forEach(function(r){keys[r.grade+'-'+r.term]=[r.grade,r.term]});
   state.groups=Object.keys(keys).map(function(k){return keys[k]}).sort(function(a,b){return a[0]-b[0]||a[1]-b[1]});
   if(!rows.length){showBad();$('out').classList.add('hidden');$('out').style.display='none';return}
   $('out').classList.remove('hidden');$('out').style.display='flex';
   if(!state.cur||!keys[state.cur.join('-')]){state.cur=state.groups[0];}
-  $('status').textContent=$('status').textContent.split(' / ')[0]+' / '+rows.length+'개 과목 줄, '+state.groups.length+'개 학년·학기'+(nounit.length?(isMid()?' / 이 파일에는 단위수가 없어 과목을 같은 비중으로 계산했습니다':' / 단위수를 읽지 못한 과목 '+nounit.length+'개는 1단위로 계산했습니다'):'')+(rows.some(function(r){return r.noDist})?' / 성취도 분포가 없는 과목 '+rows.filter(function(r){return r.noDist}).length+'개는 평균 점수만 표시합니다':'')+(skipped.length?' / 값이 빠졌거나 합이 맞지 않는 줄 '+skipped.length+'개는 계산에서 제외했습니다 ('+skipped.slice(0,3).join(', ')+(skipped.length>3?' 등':'')+')':'');
+  $('status').textContent=$('status').textContent.split(' / ')[0]+' / '+rows.length+'개 과목 줄, '+state.groups.length+'개 학년·학기'+(nounit.length?(eqW()?' / 이 파일에서 단위수를 읽지 못해 과목을 같은 비중으로 계산했습니다':' / 단위수를 읽지 못한 과목 '+nounit.length+'개는 1단위로 계산했습니다'):'')+(rows.some(function(r){return r.noDist})?' / 성취도 분포가 없는 과목 '+rows.filter(function(r){return r.noDist}).length+'개는 평균 점수만 표시합니다':'')+(skipped.length?' / 값이 빠졌거나 합이 맞지 않는 줄 '+skipped.length+'개는 계산에서 제외했습니다 ('+skipped.slice(0,3).join(', ')+(skipped.length>3?' 등':'')+')':'');
   render();
 }
 function josa(w,a,b){
@@ -607,8 +608,8 @@ function renderCharts(){
 function pc(x){return x===null||x===undefined||isNaN(x)?'-':fmt(x)+'%'}
 function renderTiles(){
   var s=summary(curRows());
-  var T=[[s.n+'과목','표시 중인 과목'],[fmt(s.avg),isMid()?'평균 점수 · 단순 평균':'평균 점수 · 단위수 가중'],[pc(s.a),'A 성취도 비율 · 5단계 과목'],[pc(s.ab),'A·B 성취도 비율 · 5단계 과목'],[pc(s.de),'D·E 성취도 비율 · 5단계 과목'],[s.three+'과목','A~C 3단계 과목 (비율에서 제외)']];
-  $('tileNote').textContent='절대평가 성취도 기준이며 석차 순위와 다릅니다. '+(isMid()?'과목 단순 평균 값입니다.':'단위수를 반영한 값입니다.');
+  var T=[[s.n+'과목','표시 중인 과목'],[fmt(s.avg),eqW()?'평균 점수 · 단순 평균':'평균 점수 · 단위수 가중'],[pc(s.a),'A 성취도 비율 · 5단계 과목'],[pc(s.ab),'A·B 성취도 비율 · 5단계 과목'],[pc(s.de),'D·E 성취도 비율 · 5단계 과목'],[s.three+'과목','A~C 3단계 과목 (비율에서 제외)']];
+  $('tileNote').textContent='절대평가 성취도 기준이며 석차 순위와 다릅니다. '+(eqW()?'과목 단순 평균 값입니다.':'단위수를 반영한 값입니다.');
   $('tiles').innerHTML=T.map(function(t){return '<div class="tile"><b>'+esc(t[0])+'</b><span>'+esc(t[1])+'</span></div>'}).join('');
 }
 function renderTabs(){
